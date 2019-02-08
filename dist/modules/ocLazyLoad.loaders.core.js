@@ -138,6 +138,7 @@
              * @param params Object optional parameters
              * @returns promise
              */
+            var loadingModule = {}; // CUSTOM CODE, CAREFULL WHEN UPDATING!!!!
             $delegate.load = function (originalModule) {
                 var originalParams = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
@@ -214,15 +215,22 @@
                     return $delegate.inject(config.name, localParams, true);
                 }
 
-                $delegate.filesLoader(config, localParams).then(function () {
-                    $delegate.inject(null, localParams).then(function (res) {
-                        deferred.resolve(res);
+                if (loadingModule[module]) {
+                    // CUSTOM CODE, CAREFULL WHEN UPDATING!!!!
+                    return loadingModule[module];
+                } else {
+                    $delegate.filesLoader(config, localParams).then(function () {
+                        $delegate.inject(null, localParams).then(function (res) {
+                            deferred.resolve(res);
+                        }, function (err) {
+                            deferred.reject(err);
+                        });
                     }, function (err) {
                         deferred.reject(err);
                     });
-                }, function (err) {
-                    deferred.reject(err);
-                });
+                    loadingModule[module] = deferred.promise;
+                    return deferred.promise;
+                }
 
                 return deferred.promise;
             };
